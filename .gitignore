@@ -1,7 +1,7 @@
 .DS_Store
 .idea/
-.eslintrc.json
-.stylelintrc
+react-github-user-card/.eslintrc.json
+react-github-user-card/.stylelintrc
 package-lock.json
 yarn.lock
 package.json
