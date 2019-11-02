@@ -1,11 +1,17 @@
-import React from 'react';
+import React, { StrictMode } from 'react';
+import { ThemeProvider } from 'mineral-ui/themes';
+import Flex from 'mineral-ui/Flex';
 
-import GithubCard from './components/GithubCard';
+import GitHubCard from './components/GitHubCard';
 
 const App = () => (
-  <>
-    <GithubCard />
-  </>
+  <ThemeProvider>
+    <StrictMode>
+      <Flex direction="column" alignItems="center">
+        <GitHubCard />
+      </Flex>
+    </StrictMode>
+  </ThemeProvider>
 );
 
 export default App;
