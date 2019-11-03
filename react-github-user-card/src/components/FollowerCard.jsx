@@ -4,6 +4,7 @@ import Card from 'mineral-ui/Card';
 import CardTitle from 'mineral-ui/Card/CardTitle';
 import Avatar from 'mineral-ui/Avatar/Avatar';
 import CardBlock from 'mineral-ui/Card/CardBlock';
+import { Box } from 'mineral-ui';
 
 class FollowerCard extends React.Component {
   handleClick = () => {
@@ -17,23 +18,22 @@ class FollowerCard extends React.Component {
 
     const avatar = (
       <Avatar>
-        <img
-          src={follower.avatar_url}
-          alt={`Avatar for ${follower.login}`}
-        />
+        <img src={follower.avatar_url} alt={`Avatar for ${follower.login}`} />
       </Avatar>
     );
 
     return (
-      <Card onClick={this.handleClick}>
-        <CardTitle
-          subtitle={follower.html_url}
-          avatar={avatar}
-        >
-          {follower.login}
-        </CardTitle>
-        <CardBlock>{`Repos: ${follower.repos_url}`}</CardBlock>
-      </Card>
+      <Box marginVertical="1rem">
+        <Card onClick={this.handleClick}>
+          <CardTitle
+            subtitle={follower.html_url}
+            avatar={avatar}
+          >
+            {follower.login}
+          </CardTitle>
+          <CardBlock>{`Repos: ${follower.repos_url}`}</CardBlock>
+        </Card>
+      </Box>
     );
   }
 }

@@ -1,10 +1,14 @@
 import React, { Component, StrictMode } from 'react';
-import { ThemeProvider } from 'mineral-ui/themes';
+import { ThemeProvider, createTheme } from 'mineral-ui/themes';
 import Flex from 'mineral-ui/Flex';
 
 import Header from './components/Header';
 import Search from './components/Search';
 import GitHubCard from './components/GitHubCard';
+
+const slate = createTheme({
+  colors: { theme: 'slate' },
+});
 
 class App extends Component {
   constructor(props) {
@@ -24,7 +28,7 @@ class App extends Component {
     const { user } = this.state;
 
     return (
-      <ThemeProvider>
+      <ThemeProvider theme={slate}>
         <StrictMode>
           <Flex
             direction="column"
@@ -33,7 +37,7 @@ class App extends Component {
           >
             <Header />
             <Search searchUser={this.searchUser} />
-            <GitHubCard userName={user} searchUser={this.searchUser} />
+            <GitHubCard userName={user} searchUser={this.searchUser} theme={slate} />
           </Flex>
         </StrictMode>
       </ThemeProvider>

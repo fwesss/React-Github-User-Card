@@ -1,8 +1,9 @@
 import React from 'react';
+import Text from 'mineral-ui/Text';
 
 const Header = () => (
   <header>
-    <h1>Github User Search</h1>
+    <Text as="h1">Github User Search</Text>
   </header>
 );
 

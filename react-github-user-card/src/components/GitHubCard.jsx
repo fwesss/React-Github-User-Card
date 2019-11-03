@@ -4,10 +4,14 @@ import styled from '@emotion/styled';
 import axios from 'axios';
 import GridLoader from 'react-spinners/GridLoader';
 import Box from 'mineral-ui/Box';
+import Flex from 'mineral-ui/Flex';
+import Text from 'mineral-ui/Text';
 import Card from 'mineral-ui/Card';
 import CardImage from 'mineral-ui/Card/CardImage';
 import CardBlock from 'mineral-ui/Card/CardBlock';
 import CardTitle from 'mineral-ui/Card/CardTitle';
+import GitHubCalendar from 'react-github-calendar';
+import ReactTooltip from 'react-tooltip';
 
 import FollowerCard from './FollowerCard';
 
@@ -24,6 +28,7 @@ class GitHubCard extends React.Component {
       user: {},
       followers: [],
       error: null,
+      apiTimeRemaining: 0,
     };
   }
 
@@ -31,11 +36,16 @@ class GitHubCard extends React.Component {
     this.getUser();
   }
 
-  componentDidUpdate(prevProps) {
+  componentDidUpdate(prevProps, prevState) {
     const { userName } = this.props;
+    const { error } = this.state;
 
     if (prevProps.userName !== userName) {
       this.getUser();
+    }
+
+    if (prevState.error !== error && error.message.includes('403')) {
+      this.timer(error.response.headers['x-ratelimit-reset'] * 1000);
     }
   }
 
@@ -43,16 +53,23 @@ class GitHubCard extends React.Component {
     this.setState({
       loading: true,
     });
+
     try {
       const { userName } = this.props;
 
       const response = await axios.get(`https://api.github.com/users/${userName}`);
+      console.log(`API calls remaining this hour: ${response.headers['x-ratelimit-remaining']}`);
+
       this.setState({
         user: response.data,
       });
 
-      if (response.data.followers.length > 0) {
+      if (response.data.followers > 0) {
         this.getFollowers();
+      } else {
+        this.setState({
+          followers: [],
+        });
       }
     } catch (error) {
       this.setState({
@@ -70,6 +87,8 @@ class GitHubCard extends React.Component {
       const { userName } = this.props;
 
       const response = await axios.get(`https://api.github.com/users/${userName}/followers`);
+      console.log(`API calls remaining this hour: ${response.headers['x-ratelimit-remaining']}`);
+
       this.setState({
         followers: response.data,
       });
@@ -80,48 +99,77 @@ class GitHubCard extends React.Component {
     }
   };
 
+  timer = (resetTime) => {
+    let timeRemaining = (new Date(resetTime) - Date.now()) / 1000;
+
+    setInterval(() => {
+      timeRemaining -= 1;
+      this.setState({
+        apiTimeRemaining: timeRemaining,
+      });
+    }, 1000);
+  };
+
   render() {
     const {
-      loading, error, user, followers,
+      loading, error, user, followers, apiTimeRemaining,
     } = this.state;
-    const { searchUser } = this.props;
+    const { searchUser, theme } = this.props;
 
     if (loading) {
       return (
         <GridLoader
           loading={loading}
-          color="#005fa3"
+          color={theme.color_theme_60}
         />
       );
     }
 
-    return error && error.message.includes('403') ? <h2>API Limit Exceeded</h2> : (
-      <Box width={460}>
-        <Card>
-          <CardImage src={user.avatar_url} alt={`Avatar for ${user.name} `} />
-
-          {user.name ? <CardTitle subtitle={user.login}>{user.name}</CardTitle>
-            : <CardTitle>{user.login}</CardTitle>}
-
-          <CardBlock>
-            <List>
-              <li>{user.location}</li>
-              <li>{user.html_url}</li>
-              <li>{`Followers: ${user.followers}`}</li>
-              <li>{`Following: ${user.following}`}</li>
-              <li>{user.bio}</li>
-            </List>
-            {followers.length > 0
-              ? [
-                <h3>Followers</h3>,
-                followers.map((follower) => (
-                  <FollowerCard key={follower.id} follower={follower} searchUser={searchUser} />
-                )),
-              ]
-              : <div />}
-          </CardBlock>
-        </Card>
+    return error && error.message.includes('403') ? (
+      <Box>
+        <Text as="h2">API Limit Exceeded</Text>
+        {apiTimeRemaining > 0 ? <Text as="p">{`Rate limit will reset in ${Math.floor(apiTimeRemaining / 60)} minutes and ${Math.floor(apiTimeRemaining % 60)} seconds.`}</Text>
+          : <Text as="p">Ready to refresh</Text>}
       </Box>
+    ) : (
+      <Flex id="card" direction="column" alignItems="center" width={960}>
+        <GitHubCalendar
+          username={user.login}
+          color={theme.color_theme_60}
+        >
+          <ReactTooltip delayShow={50} html />
+        </GitHubCalendar>
+
+        <Box width={460} marginVertical="3rem">
+          <Card>
+            <CardImage src={user.avatar_url} alt={`Avatar for ${user.name} `} />
+
+            {user.name ? <CardTitle subtitle={user.login}>{user.name}</CardTitle>
+              : <CardTitle>{user.login}</CardTitle>}
+
+            <CardBlock>
+              <List>
+                <Text as="li">{user.location}</Text>
+                <Text as="li">{user.html_url}</Text>
+                <Text as="li">{`Followers: ${user.followers}`}</Text>
+                <Text as="li">{`Following: ${user.following}`}</Text>
+                <Text as="li">{user.bio}</Text>
+              </List>
+
+              {followers.length > 0
+                ? (
+                  <Box>
+                    <Text as="h3">Followers</Text>
+                    {followers.map((follower) => (
+                      <FollowerCard key={follower.id} follower={follower} searchUser={searchUser} />
+                    ))}
+                  </Box>
+                )
+                : <div />}
+            </CardBlock>
+          </Card>
+        </Box>
+      </Flex>
     );
   }
 }
@@ -139,6 +187,9 @@ GitHubCard.propTypes = {
     bio: PropTypes.string,
   }),
   searchUser: PropTypes.func.isRequired,
+  theme: PropTypes.shape({
+    color_theme_60: PropTypes.string,
+  }).isRequired,
 };
 
 GitHubCard.defaultProps = {
